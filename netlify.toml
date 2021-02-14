@@ -1,6 +1,6 @@
 [build]
     publish = ""
-    command = "empty command for some reason"
+    command = "echo empty command"
     functions = "backend/"
 
 [[redirects]]
