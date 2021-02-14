@@ -4,11 +4,9 @@
 	let name = 'world';
 
 	onMount(async () => {
-		console.log("onmount")
-		//const res = await fetch(`/api/tour`).then(res => res.json()).then(data => console.log(data))
-    const res = await fetch(`/api/tour`).then(res => res.json()).then(data => console.log(data))
-    console.log(res)
-    //const res = await fetch(`/.netlify/backend/tour`).then(res => res.json()).then(data => console.log(data))
+    let tours = null;
+    let res = await fetch(`/api/tour`).then(res => res.json()).then(data => tours = data)
+    console.log(tours.message)
 	});
 </script>
 
