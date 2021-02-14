@@ -1,0 +1,9 @@
+[build]
+    publish = ""
+    command = "npm run build"
+    functions = "backend/"
+
+[[redirects]]
+    from = "/api/tour"
+    to = "/.netlify/backend/tour"
+    status = 200
