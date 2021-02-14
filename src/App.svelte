@@ -1,13 +1,25 @@
 <script>
-	import { onMount } from 'svelte';
+  import { onMount } from "svelte";
 
-	let name = 'world';
+  let tours = null;
 
-	onMount(async () => {
-    let tours = null;
-    let res = await fetch(`/api/tour`).then(res => res.json()).then(data => tours = data)
-    console.log(tours.message)
-	});
+  onMount(async () => {
+    let data = await fetch(`/api/tour`).then((res) => res.json());
+    tours = data.data;
+  });
+
 </script>
 
-<h1>Hello {name}!</h1>
+{#if tours}
+  {#each tours as tour}
+    <h1>{tour.name}</h1>
+  {/each}
+{:else}
+  <h1>Loading...</h1>
+{/if}
+
+<style>
+  h1 {
+    color: red;
+  }
+</style>
