@@ -1,9 +1,12 @@
 [build]
-    publish = ""
-    command = "echo empty command"
-    functions = "backend/"
+publish = ""
+command = "npm run build"
+functions = "backend/"
+
+# [dev]
+# framework = "svelte"
 
 [[redirects]]
-    from = "/api/tour"
-    to = "/.netlify/backend/tour"
-    status = 200
+from = "/api/tour"
+to = "/.netlify/backend/tour"
+status = 200

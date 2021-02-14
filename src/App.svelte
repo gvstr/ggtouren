@@ -5,11 +5,10 @@
 
 	onMount(async () => {
 		console.log("onmount")
-		const res = await fetch(`/api/tour`);
-		console.log("fetching")
-		tour = await res.json();
-		console.log("awaiting")
-		console.log(tour.message);
+		//const res = await fetch(`/api/tour`).then(res => res.json()).then(data => console.log(data))
+    const res = await fetch(`/api/tour`).then(res => res.json()).then(data => console.log(data))
+    console.log(res)
+    //const res = await fetch(`/.netlify/backend/tour`).then(res => res.json()).then(data => console.log(data))
 	});
 </script>
 
