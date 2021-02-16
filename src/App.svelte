@@ -62,10 +62,10 @@
           <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.status}</span>
           <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.starttime}</span>
           <!-- Individual competition header starts here -->
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Namn</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Poäng</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Extrapoäng</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Birdies</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Namn</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Poäng</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Extrapoäng</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Birdies</span>
           {#each competition.players as player}
             <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.name}</span>
             <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.points}</span>
@@ -126,7 +126,12 @@
     border-bottom: 1px solid black;
   }
   .competition-row{
-    background-color: #6596CD;
+    background-color: #4f7199;
+    color: #E7ECEF;
+    border-bottom: 1px solid black;
+  }
+  .competition-row-header{
+    background-color: #6591c4;
     color: #E7ECEF;
     border-bottom: 1px solid black;
   }
