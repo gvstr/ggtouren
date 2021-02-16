@@ -19,14 +19,23 @@
   });
 
   let toggleId = (index, id) => {
-    console.log("toggle id: "+id)
     rowIds[index].forEach((x) => {
       if (x.id === id) {
         x.hidden = !x.hidden;
       }
     });
     rowIds = rowIds; // svelte reacts to assignments
-    console.log(rowIds);
+  };
+
+  let toggleHeadlineId = (index, id) => {
+    rowIds[index].forEach((x, ind) => {
+      if(ind == index){
+        x.hidden = !x.hidden;
+      } else {
+        x.hidden = true;
+      }
+    });
+    rowIds = rowIds; // svelte reacts to assignments
   };
 </script>
 
@@ -35,7 +44,7 @@
     {#if tours}
       {#each tours as tour, tourIndex}
         <!-- TOP MOST OBJECT -->
-        <span id="tour-header" on:click={() => toggleId(tourIndex, rowIds[tourIndex][tourIndex].id)}>{tour.name}</span>
+        <span id="tour-header" on:click={() => toggleHeadlineId(tourIndex, rowIds[tourIndex][tourIndex].id)}>{tour.name}</span>
         <!-- Sub header starts here -->
         <span class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-header">Plats</span>
         <span class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-header">Datum</span>
