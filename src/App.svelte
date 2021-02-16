@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import Spinner from "./components/Spinner.svelte"
 
   let tours = null;
   let rowIds = [];
@@ -18,7 +19,7 @@
     });
   });
 
-  let toggleId = (index, id) => {
+  function toggleId (index, id) {
     rowIds[index].forEach((x) => {
       if (x.id === id) {
         x.hidden = !x.hidden;
@@ -27,7 +28,7 @@
     rowIds = rowIds; // svelte reacts to assignments
   };
 
-  let toggleHeadlineId = (index, id) => {
+  function toggleHeadlineId (index) {
     rowIds[index].forEach((x, ind) => {
       if(ind == index){
         x.hidden = !x.hidden;
@@ -37,42 +38,48 @@
     });
     rowIds = rowIds; // svelte reacts to assignments
   };
+
+  function sortArray(){
+
+  }
 </script>
 
 <div class="container">
+  {#if tours}
   <div class="grid">
-    {#if tours}
       {#each tours as tour, tourIndex}
         <!-- TOP MOST OBJECT -->
-        <span id="tour-header" on:click={() => toggleHeadlineId(tourIndex, rowIds[tourIndex][tourIndex].id)}>{tour.name}</span>
+        <span class="tour-header" on:click={() => toggleHeadlineId(tourIndex)}>{tour.name}</span>
         <!-- Sub header starts here -->
-        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-header">Plats</span>
-        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-header">Datum</span>
-        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-header">Status</span>
-        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-header">Starttid</span>
+        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-header">Plats</span>
+        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-header">Datum</span>
+        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-header">Status</span>
+        <span class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-header">Starttid</span>
         {#each tour.competitions as competition, competitionIndex}
         <!-- Competition rows start here -->
-          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-row">{competition.location}</span>
-          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-row">{competition.date}</span>
-          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-row">{competition.status}</span>
-          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} id="competition-row">{competition.starttime}</span>
+          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.location}</span>
+          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.date}</span>
+          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.status}</span>
+          <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.starttime}</span>
           <!-- Individual competition header starts here -->
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">Namn</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">Poäng</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">Extrapoäng</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">Birdies</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Namn</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Poäng</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Extrapoäng</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>Birdies</span>
           {#each competition.players as player}
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">{player.name}</span>
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">{player.points}</span>
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">{player.extraPoints}</span>
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} id="player-row">{player.birdies}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.name}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.points}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.extraPoints}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.birdies}</span>
           {/each}
         {/each}
-      {/each}
-    {:else}
-      <h1>Nothing here</h1>
-    {/if}
+      {/each}    
   </div>
+  {:else}
+    <div class = "loading-spinner">
+      <Spinner />
+    </div>
+    {/if}
 </div>
 
 <style>
@@ -83,6 +90,15 @@
   }
   .container{
     width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .loading-spinner{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .grid {
     margin-left: auto;
@@ -98,24 +114,19 @@
     padding: 4px 2px;
   }
 
-  #tour-header {
+  .tour-header {
     grid-area: header;
     text-align: center;
     background-color: #274C77;
     color: #E7ECEF;
   }
-  #competition-header{
+  .competition-header{
     background-color: #478978;
     color: #E7ECEF;
     border-bottom: 1px solid black;
   }
-  #competition-row{
+  .competition-row{
     background-color: #6596CD;
-    color: #E7ECEF;
-    border-bottom: 1px solid black;
-  }
-  #competition-row{
-    background-color: #93B5DC;
     color: #E7ECEF;
     border-bottom: 1px solid black;
   }
