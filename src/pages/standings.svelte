@@ -95,7 +95,7 @@
         <span class:hidden={rowIds[tourIndex].hidden} class="competition-row">{r.name}</span>
         <span class:hidden={rowIds[tourIndex].hidden} class="competition-row">{r.sum} </span>
       {/each}
-      <span class:hidden={rowIds[tourIndex].hidden} class="competition-footer"><label><input type=checkbox bind:checked={checked} on:change={()=>removeTwoLowestValues(checked, tourIndex)}> Visa med de två lägsta borttagna</label></span>
+      <span class:hidden={rowIds[tourIndex].hidden} class="competition-footer"><label><input type=checkbox bind:checked={checked} on:change={()=>removeTwoLowestValues(checked, tourIndex)}> Visa med de två lägsta resultaten borttagna</label></span>
     {/each}
     </div>
   {:else}
