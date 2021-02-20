@@ -112,7 +112,8 @@
     margin: 0;
   }
   .container{
-    width: 500px;
+    max-width: 500px;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
   }
