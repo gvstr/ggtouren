@@ -10,6 +10,7 @@
   });
   // All routes with the component to be loaded here, place error/404 last
   let routes = [
+    { url: "", component: Competitions },
     { url: "/", component: Competitions },
     { url: "/competitions", component: Competitions },
     { url: "/standings", component: Standings },
