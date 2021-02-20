@@ -8,10 +8,9 @@
   onMount(async () => {
     let data = await fetch(`/api/tour`).then((res) => res.json());
     tours = data.data;
-    console.log(tours)
     tours.forEach((tour) => {
       let temp = [];
-      temp.push({ id: tour._id, hidden: true })
+      temp.push({ id: tour._id, hidden: !tour.isActive })
         tour.competitions.forEach(competition => {
           temp.push({ id: competition._id, hidden: true })
         })

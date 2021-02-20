@@ -12,7 +12,8 @@
     let data = await fetch(`/api/tour`).then((res) => res.json());
     tours = data.data;
     tours.forEach((tour, index) => {
-      rowIds.push({ id: tour._id, hidden: false })
+      console.log(tour)
+      rowIds.push({ id: tour._id, hidden: !tour.isActive })
       tour.competitions.forEach(competition => {
         competition.players.forEach(player => {
             // Add new player to array of playerStats if name doesnt already exist
@@ -30,7 +31,6 @@
       playerStats = orderArray(playerStats, "sum", true);
       tourResults[index].result = playerStats;
     }); // foreach ends
-    console.log(tourResults)
   });
 
   function setSum(array){
@@ -66,7 +66,6 @@
   function toggleHeadlineId (index) {
     rowIds[index].hidden = !rowIds[index].hidden;
     rowIds = rowIds; // svelte reacts to assignments
-    console.log(rowIds)
   };
 
   function removeTwoLowestValues(checked, index){
