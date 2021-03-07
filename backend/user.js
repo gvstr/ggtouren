@@ -5,7 +5,6 @@ const { MongoClient } = require('mongodb');
 exports.handler = async (event, context) => {
   let uri = process.env.DB_URI;
   const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
   try {
     const body = JSON.parse(event.body);
     await client.connect();
@@ -18,13 +17,13 @@ exports.handler = async (event, context) => {
       case "login":
         return await login(collection, body.email, body.password);
       case "logout":
-        // code block
+        return await logout();
         break;
       case "authenticate":
-        // code block
+        return await validateToken(event);
         break;
       default:
-      // code block
+        return { statusCode: 500, body: JSON.stringify({ authorized: false, validated: false, message: "Okänt fel", status: 500 }) };
     }
   } catch (e) {
     console.error(e);
@@ -36,9 +35,7 @@ exports.handler = async (event, context) => {
 }
 
 async function login(collection, email, password) {
-  console.log("login with password: " + password)
   const user = await collection.findOne({ email: email });
-  console.log(user.password)
   if (!user) return { statusCode: 404, body: JSON.stringify({ authorized: false, message: "Användare är ej registrerad" }) };
   const validPassword = bcrypt.compareSync(password, user.password);
   if (!validPassword) return { statusCode: 403, body: JSON.stringify({ authorized: false, message: "Fel email eller lösenord" }) };
@@ -75,4 +72,31 @@ async function register(collection, email, password) {
       };
     }
   });
-};
+}
+
+async function logout() {
+  return {
+    statusCode: 200,
+    headers: {
+      "Set-Cookie": ['token=deleted;expires=Thu, 01 Jan 1970 00:00:00 GMT;httpOnly;']
+    },
+    body: JSON.stringify({ authorized: false, message: "Utloggad" })
+  };
+}
+
+async function validateToken(event) {
+  const cookies = event.headers.cookie && cookie.parse(event.headers.cookie)
+  if (cookies && cookies.jwt) {
+    jwt.verify(cookies.jwt, process.env.SECRET, function (err, decoded) {
+      if (err) {
+        console.log(err)
+        return { statusCode: 500, body: JSON.stringify({ authorized: false, validated: false, message: "Validering misslyckad", status: 500 }) };
+      }
+      req.userId = decoded.id;
+      return { statusCode: 200, body: JSON.stringify({ authorized: true, validated: true, message: "Validering lyckad", status: 200 }) };
+    });
+  }
+  else {
+    return { statusCode: 500, body: JSON.stringify({ authorized: false, validated: false, message: "Validering misslyckad", status: 500 }) };
+  }
+}
