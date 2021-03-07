@@ -61,15 +61,15 @@
           <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.status}</span>
           <span on:click={() => toggleId(tourIndex, rowIds[tourIndex][competitionIndex+1].id)} class:hidden={rowIds[tourIndex][tourIndex].hidden} class="competition-row">{competition.starttime}</span>
           <!-- Individual competition header starts here -->
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Namn</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Poäng</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Extrapoäng</span>
-          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class={"competition-row-header"}>Birdies</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="competition-row-header">Namn</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="competition-row-header">Poäng</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="competition-row-header">Extrapoäng</span>
+          <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="competition-row-header">Birdies</span>
           {#each competition.players as player}
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.name}</span>
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.points}</span>
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.extraPoints}</span>
-            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden}>{player.birdies}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="player-row-name">{player.name}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="player-row-points">{player.points}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="player-row-extrapoints">{player.extraPoints}</span>
+            <span class:hidden={rowIds[tourIndex][competitionIndex+1].hidden} class="player-row-birdies">{player.birdies}</span>
           {/each}
         {/each}
       {/each}    

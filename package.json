@@ -17,6 +17,8 @@
     "svelte": "^3.0.0"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.4",
     "sirv-cli": "^1.0.0"
   }
