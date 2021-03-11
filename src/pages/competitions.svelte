@@ -2,219 +2,173 @@
   import { onMount } from "svelte";
   import Spinner from "../components/Spinner.svelte";
 
-  let tours = null;
-  let rowIds = [];
+  let tourData = [];
 
   onMount(async () => {
-    let data = await fetch(`/api/tour`).then((res) => res.json());
-    tours = data.data;
-    tours.forEach((tour) => {
-      let temp = [];
-      temp.push({ id: tour._id, hidden: !tour.isActive });
-      tour.competitions.forEach((competition) => {
-        temp.push({ id: competition._id, hidden: true });
+    let data = await fetch(`/api/tour`, {
+      method: "POST",
+      body: JSON.stringify({ action: "getAll" }),
+    }).then((res) => res.json());
+
+    data.data.forEach((t) => {
+      let newTour = {
+        id: t._id,
+        name: t.name,
+        competitions: [],
+        expanded: true,
+      };
+      t.competitions.forEach((c) => {
+        let newCompetition = {
+          id: c._id,
+          name: c.location,
+          date: c.date,
+          status: c.status,
+          starttime: c.starttime,
+          players: [],
+          expanded: true,
+        };
+        c.players.forEach((p) => {
+          let newPlayer = p;
+          newPlayer["totalPoints"] = p.points + p.extraPoints;
+          newCompetition.players.push(p);
+        });
+        newTour.competitions.push(newCompetition);
       });
-      rowIds.push(temp);
+      tourData.push(newTour);
     });
+    tourData = tourData;
   });
 
-  function toggleId(index, id) {
-    rowIds[index].forEach((x) => {
-      if (x.id === id) {
-        x.hidden = !x.hidden;
-      }
+  function getCompetitionInTour(tourId, competitionId) {
+    let competition = null;
+    let tour = tourData.filter((tour) => {
+      return tour.id === tourId;
     });
-    rowIds = rowIds; // svelte reacts to assignments
-  }
-
-  function toggleHeadlineId(index) {
-    rowIds[index].forEach((x, ind) => {
-      if (ind == index) {
-        x.hidden = !x.hidden;
-      } else {
-        x.hidden = true;
-      }
-    });
-    rowIds = rowIds; // svelte reacts to assignments
-  }
-
-  function sortArray() {}
-
-  function sortByName(tourId, competitionId) {
-    console.log("tour id: " + tourId + " competition id: " + competitionId);
-    tours.forEach((t) => {
-      if (t._id == tourId) {
-        t.competitions.forEach((c) => {
-          if (c._id == competitionId) {
-            console.log("is sorted: " + isSorted(c.players))
-            if(isSorted(c.players, "name")){
-              c.players.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-            }
-            else{
-              c.players.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? 0 : -1))
-            }
-          }
+    if (tour != null) {
+      tour.forEach((t) => {
+        let c = t.competitions.filter((tour) => {
+          return tour.id === competitionId;
         });
-      }
-    });
-    tours = tours;
+        competition = c;
+      });
+    }
+    return competition;
   }
 
-  function isSorted(array, property){
-    console.log(array)
-    return array.sort((a,b) => (a[property] > b[property]) ? 1 : 0)
+  function setTourExpanded(tourId) {
+    let i = tourData.findIndex((x) => x.id == tourId);
+    tourData[i].expanded = !tourData[i].expanded;
+    tourData = tourData;
+    console.log(tourData);
+  }
+
+  function setCompetitionExpanded(tourId, competitionId) {
+    let ti = tourData.findIndex((x) => x.id == tourId);
+    let ci = tourData[ti].competitions.findIndex((x) => x.id == competitionId);
+    tourData[ti].competitions[ci].expanded = !tourData[ti].competitions[ci]
+      .expanded;
+    tourData = tourData;
   }
 </script>
 
-<div class="container">
-  {#if tours}
-    <div class="grid">
-      {#each tours as tour, tourIndex}
-        <!-- TOP MOST OBJECT -->
-        <span class="tour-header" on:click={() => toggleHeadlineId(tourIndex)}
-          >{tour.name}</span
-        >
-        <!-- Sub header starts here -->
-        <span
-          class:hidden={rowIds[tourIndex][tourIndex].hidden}
-          class="competition-header">Plats</span
-        >
-        <span
-          class:hidden={rowIds[tourIndex][tourIndex].hidden}
-          class="competition-header">Datum</span
-        >
-        <span
-          class:hidden={rowIds[tourIndex][tourIndex].hidden}
-          class="competition-header">Status</span
-        >
-        <span
-          class:hidden={rowIds[tourIndex][tourIndex].hidden}
-          class="competition-header">Starttid</span
-        >
-        {#each tour.competitions as competition, competitionIndex}
-          <!-- Competition rows start here -->
-          <span
-            on:click={() =>
-              toggleId(tourIndex, rowIds[tourIndex][competitionIndex + 1].id)}
-            class:hidden={rowIds[tourIndex][tourIndex].hidden}
-            class="competition-row">{competition.location}</span
+{#if tourData.length > 0}
+  {#each tourData as tour}
+    <table class="tour-table">
+      <tr class="tour-header" on:click={setTourExpanded(tour.id)}>
+        <th colspan="4">{tour.name}</th>
+      </tr>
+      <tr class="competition-header" class:hidden={tour.expanded}>
+        <th>Bana</th>
+        <th>Datum</th>
+        <th>Status</th>
+        <th>Starttid</th>
+      </tr>
+      {#if tour.competitions && tour.competitions.length > 0}
+        {#each tour.competitions as competition}
+          <tr
+            class="competition"
+            class:hidden={tour.expanded}
+            on:click={setCompetitionExpanded(tour.id, competition.id)}
           >
-          <span
-            on:click={() =>
-              toggleId(tourIndex, rowIds[tourIndex][competitionIndex + 1].id)}
-            class:hidden={rowIds[tourIndex][tourIndex].hidden}
-            class="competition-row">{competition.date}</span
+            <td>{competition.name}</td>
+            <td>{competition.date}</td>
+            <td>{competition.status}</td>
+            <td>{competition.starttime}</td>
+          </tr>
+          <tr
+            class="player-header"
+            class:hidden={competition.expanded || tour.expanded}
           >
-          <span
-            on:click={() =>
-              toggleId(tourIndex, rowIds[tourIndex][competitionIndex + 1].id)}
-            class:hidden={rowIds[tourIndex][tourIndex].hidden}
-            class="competition-row">{competition.status}</span
-          >
-          <span
-            on:click={() =>
-              toggleId(tourIndex, rowIds[tourIndex][competitionIndex + 1].id)}
-            class:hidden={rowIds[tourIndex][tourIndex].hidden}
-            class="competition-row">{competition.starttime}</span
-          >
-          <!-- Individual competition header starts here -->
-          <span
-            class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-            class="competition-row-header"
-            on:click={() => sortByName(tour._id, competition._id)}>Namn</span
-          >
-          <span
-            class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-            class="competition-row-header">Poäng</span
-          >
-          <span
-            class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-            class="competition-row-header">Extrapoäng</span
-          >
-          <span
-            class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-            class="competition-row-header">Birdies</span
-          >
+            <td>Spelare</td>
+            <td>Poäng</td>
+            <td>Extrapoäng</td>
+            <td>Birdies</td>
+          </tr>
           {#each competition.players as player}
-            <span
-              class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-              class="player-row-name">{player.name}</span
+            <tr
+              class="player"
+              class:hidden={competition.expanded || tour.expanded}
             >
-            <span
-              class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-              class="player-row-points">{player.points}</span
-            >
-            <span
-              class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-              class="player-row-extrapoints">{player.extraPoints}</span
-            >
-            <span
-              class:hidden={rowIds[tourIndex][competitionIndex + 1].hidden}
-              class="player-row-birdies">{player.birdies}</span
-            >
+              <td>{player.name}</td>
+              <td>{player.points}</td>
+              <td>{player.extraPoints}</td>
+              <td>{player.birdies}</td>
+            </tr>
           {/each}
         {/each}
-      {/each}
-    </div>
-  {:else}
-    <div class="loading-spinner">
-      <Spinner />
-    </div>
-  {/if}
-</div>
+      {/if}
+    </table>
+  {/each}
+{:else}
+  <div class="loading">
+    <Spinner />
+  </div>
+{/if}
 
 <style>
-  :global(body) {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
+  table,
+  td,
+  tr,
+  th {
+    margin: 10px;
+    border-spacing: 0;
+    border-collapse: collapse;
+    cursor: pointer;
   }
-  .container {
+  .loading {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .tour-table {
+    max-width: 500px;
     width: 100%;
     margin-left: auto;
     margin-right: auto;
+    border: 1px solid black;
   }
-  .loading-spinner {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .grid {
-    margin-left: auto;
-    margin-right: auto;
-    min-width: 320px;
-    max-width: 500px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-areas: "header header header header";
-  }
-
-  .grid > span {
-    padding: 4px 2px;
-  }
-
   .tour-header {
-    grid-area: header;
-    text-align: center;
-    background-color: #274c77;
-    color: #e7ecef;
+    background-color: #6da34d;
+    color: white;
+    height: 40px;
   }
   .competition-header {
-    background-color: #478978;
-    color: #e7ecef;
+    background-color: #c5e99b;
+    text-align: left;
     border-bottom: 1px solid black;
   }
-  .competition-row {
-    background-color: #4f7199;
-    color: #e7ecef;
-    border-bottom: 1px solid black;
+  .competition {
+    background-color: #c5e99b;
+    border-bottom: 1px solid #6da34d;
   }
-  .competition-row-header {
-    background-color: #6591c4;
-    color: #e7ecef;
-    border-bottom: 1px solid black;
+  .player-header {
+    background-color: #9cbdd3;
+  }
+  .player {
+    background-color: #f1f7ed;
   }
   .hidden {
     display: none;
