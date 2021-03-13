@@ -1,6 +1,6 @@
 let jwt = require('jsonwebtoken');
 let bcrypt = require('bcryptjs');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
 exports.handler = async (event, context) => {
   let uri = process.env.DB_URI;
@@ -8,13 +8,17 @@ exports.handler = async (event, context) => {
   try {
     const body = JSON.parse(event.body);
     await client.connect();
-    const db = client.db("gg-tour");
-    const collection = await db.collection("tours");
     switch (body.action) {
       case "getAll":
-        return await getAll(collection);
+        return await getAll(client);
       case "addNewTour":
-        return await addNewTour(collection, body.name, body.active);
+        return await addNewTour(client, event);
+      case "deleteTour":
+        return await deleteTour(client, event);
+      case "updateTour":
+        return await updateTour(client, event);
+      case "setActiveTour":
+        return await setActiveTour(client, event);
       default:
         return { statusCode: 500, body: JSON.stringify({ message: "Okänt fel", status: 500 }) };
     }
@@ -28,27 +32,81 @@ exports.handler = async (event, context) => {
   }
 }
 
-async function getAll(collection) {
-  const data = await collection.find({}).toArray();
-  return { statusCode: 200, body: JSON.stringify({ data }) };
+async function getAll(client) {
+  try {
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .find({}).toArray();
+    return { statusCode: 200, body: JSON.stringify({ result }) };
+  } catch (e) {
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
 }
 
-async function addNewTour(collection, name, active) {
-  const tour = await collection.findOne({ name: name });
-  if (tour) return { statusCode: 401, body: JSON.stringify({ message: "Tour with name already exists" }) };
-  await collection.insertOne(
-    {
-      name: name,
-      isActive: active,
-      competitions: []
-    },
-    async function (error, response) {
-      if (error) {
-        console.log(error)
-        return { statusCode: 500, body: JSON.stringify({ message: "Failed to get from database" }) };
-      }
-      else {
-        return { statusCode: 200, body: JSON.stringify({ message: "Tour created" }) };
-      }
-    });
+async function addNewTour(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .insertOne({
+        name: body.name,
+        isActive: body.active,
+        competitions: []
+      });
+    return { statusCode: 200, body: JSON.stringify({ message: result }) };
+  }
+  catch (e) {
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
+}
+
+async function deleteTour(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .deleteOne({ _id: ObjectId(body.id) })
+    return { statusCode: 200, body: JSON.stringify({ message: result }) };
+  }
+  catch (e) {
+    console.log(e)
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
+}
+
+async function updateTour(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .replaceOne({ _id: ObjectId(body.id) }, { "name": body.document.name, "isActive": body.document.isActive, "competitions": body.document.competitions })
+    return { statusCode: 200, body: JSON.stringify({ message: result }) };
+  }
+  catch (e) {
+    console.log(e)
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
+}
+
+async function setActiveTour(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result_set_false = await client
+      .db("gg-tour")
+      .collection("tours")
+      .updateMany({}, { $set: { isActive: false } });
+    const result_set_true = await client
+      .db("gg-tour")
+      .collection("tours")
+      .updateOne({ _id: ObjectId(body.id) }, { $set: { isActive: true } });
+    return { statusCode: 200, body: JSON.stringify({ message: result_set_true }) };
+  }
+  catch (e) {
+    console.log(e)
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
 }

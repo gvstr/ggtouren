@@ -9,8 +9,8 @@
       method: "POST",
       body: JSON.stringify({ action: "getAll" }),
     }).then((res) => res.json());
-
-    data.data.forEach((t) => {
+    console.log(data)
+    data.result.forEach((t) => {
       let newTour = {
         id: t._id,
         name: t.name,
@@ -148,7 +148,6 @@
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    border: 1px solid black;
   }
   .tour-header {
     background-color: #6da34d;

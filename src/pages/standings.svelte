@@ -13,7 +13,7 @@
       method: "POST",
       body: JSON.stringify({ action: "getAll" }),
     }).then((res) => res.json());
-    tours = data.data;
+    tours = data.result;
     tours.forEach((tour, index) => {
       console.log(tour);
       rowIds.push({ id: tour._id, hidden: !tour.isActive });
@@ -91,8 +91,8 @@
 
 <div class="container">
   {#if tourResults && tourResults.length > 0}
-    <div class="grid">
-      {#each tourResults as tr, tourIndex}
+    {#each tourResults as tr, tourIndex}
+      <div class="grid">
         <span class="tour-header" on:click={() => toggleHeadlineId(tourIndex)}
           >{tr.name}</span
         >
@@ -125,8 +125,8 @@
             /> Visa med de två lägsta resultaten borttagna</label
           ></span
         >
-      {/each}
-    </div>
+      </div>
+    {/each}
   {:else}
     <div class="loading">
       <Spinner />

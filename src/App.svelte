@@ -15,7 +15,7 @@
     { url: "/", component: Competitions },
     { url: "/competitions", component: Competitions },
     { url: "/standings", component: Standings },
-    // { url: "/manage", component: Manage },
+    { url: "/manage", component: Manage },
     { url: "/error", component: error }
   ];
   let route = routes[0].component;
@@ -54,7 +54,7 @@
     <button on:click={() => (location.hash = '/')}>Tävlingar</button>
     <!-- <button on:click={() => (location.hash = '/competitions')}>Tävlingar</button> -->
     <button on:click={() => (location.hash = '/standings')}>Ställning</button>
-    <!-- <button on:click={() => (location.hash = '/manage')}>Administrera</button> -->
+    <button on:click={() => (location.hash = '/manage')}>Administrera</button>
   </nav>
   <svelte:component this={route} />
 </div>
