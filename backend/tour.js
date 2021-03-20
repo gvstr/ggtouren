@@ -19,6 +19,10 @@ exports.handler = async (event, context) => {
         return await updateTour(client, event);
       case "setActiveTour":
         return await setActiveTour(client, event);
+      case "updateCompetition":
+        return await updateCompetition(client, event);
+      case "addNewCompetition":
+        return await updateCompetition(client, event);
       default:
         return { statusCode: 500, body: JSON.stringify({ message: "Okänt fel", status: 500 }) };
     }
@@ -104,6 +108,65 @@ async function setActiveTour(client, event) {
       .collection("tours")
       .updateOne({ _id: ObjectId(body.id) }, { $set: { isActive: true } });
     return { statusCode: 200, body: JSON.stringify({ message: result_set_true }) };
+  }
+  catch (e) {
+    console.log(e)
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
+}
+
+async function updateCompetition(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .updateOne(
+        { _id: ObjectId(body.tourId) },
+        {
+          $set: {
+            "competitions.$[i].location": body.location,
+            "competitions.$[i].date": body.date,
+            "competitions.$[i].starttime": body.starttime,
+            "competitions.$[i].status": body.status,
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              "i._id": ObjectId(body.competitionId)
+            }
+          ]
+        });
+    return { statusCode: 200, body: JSON.stringify({ message: result }) };
+  }
+  catch (e) {
+    console.log(e)
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
+}
+
+async function addNewCompetition(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .updateOne(
+        { _id: ObjectId(body.tourId) },
+        {
+          $push: {
+            competitions: {
+              _id: ObjectId(),
+              location: body.location,
+              date: body.date,
+              starttime: body.starttime,
+              players: body.players
+            }
+          }
+        }
+      );
+    return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
   catch (e) {
     console.log(e)

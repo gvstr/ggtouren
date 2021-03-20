@@ -1,12 +1,15 @@
 <script>
   import { onMount } from "svelte";
   import Spinner from "../components/Spinner.svelte";
+  import Competitions from "./competitions.svelte";
+  import { players } from "../components/players";
 
   let tours = null;
-  let enabled = [];
   let newTourName = null;
   let addNewTourEnabled = false;
   let waiting = false;
+  let statuses = ["Preliminär", "Bokad", "Spelad"];
+  let emptyCompetitions = [];
 
   onMount(async () => {
     await fetchAllTours();
@@ -19,12 +22,17 @@
     }).then((res) => res.json());
     tours = data.result;
 
-    tours.forEach((t) => {
-      enabled.push({ id: t._id, enabled: t.isActive });
-      t.competitions.forEach((c) =>
-        enabled.push({ id: c._id, enabled: false })
-      );
+    tours.map((t) => {
+      t.enabled = false;
+      emptyCompetitions.push({
+        location: null,
+        date: null,
+        startTime: null,
+        status: statuses[0],
+        players: players,
+      });
     });
+
     console.log(tours);
   }
 
@@ -65,15 +73,11 @@
         }),
       }).then((res) => res.json());
       await fetchAllTours();
-      console.log("deleted");
-      console.log(result);
       waiting = false;
     }
   }
 
   async function updateTour(id, name) {
-    console.log("tour");
-    console.log(await getTourById(id));
     let tourToUpdate = await getTourById(id)[0];
     if (tourToUpdate) {
       if (confirm(`Vill du uppdatera tour ${name}?`)) {
@@ -87,78 +91,182 @@
           }),
         }).then((res) => res.json());
         await fetchAllTours();
-        console.log("deleted");
-        console.log(result);
         waiting = false;
       }
     }
   }
 
   function getTourById(id) {
-    return tours.filter((x) => x._id == id);
+    let tour = tours.filter((x) => x._id == id);
+    tour.map((t) => {
+      delete t.enabled;
+      return t;
+    });
+    return tour;
   }
 
-  async function setActiveTour(id){
+  async function setActiveTour(id) {
     waiting = true;
     let data = await fetch(`/api/tour`, {
       method: "POST",
       body: JSON.stringify({
         action: "setActiveTour",
-        isActive: newTourName
+        isActive: newTourName,
       }),
     }).then((res) => res.json());
     await fetchAllTours();
     waiting = false;
   }
+
+  function toggleEnabled(id) {
+    tours.forEach((x) => {
+      if (x._id === id) {
+        x.enabled = !x.enabled;
+      }
+    });
+    tours = tours;
+  }
+
+  async function updateCompetition(
+    tourId,
+    competitionId,
+    location,
+    date,
+    startTime,
+    status
+  ) {
+    waiting = true;
+    let data = await fetch(`/api/tour`, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "updateCompetition",
+        tourId: tourId,
+        competitionId: competitionId,
+        location: location,
+        date: date,
+        starttime: startTime,
+        status: status,
+      }),
+    }).then((res) => res.json());
+    await fetchAllTours();
+    waiting = false;
+  }
+
+  async function addNewCompetition(
+    tourId,
+    competitionId,
+    location,
+    date,
+    startTime,
+    status,
+    players,
+    index
+  ) {
+    waiting = true;
+    let data = await fetch(`/api/tour`, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "addNewCompetition",
+        tourId: tourId,
+        competitionId: competitionId,
+        location: location,
+        date: date,
+        starttime: startTime,
+        status: status,
+        players: players,
+      }),
+    }).then((res) => res.json());
+    await fetchAllTours();
+
+    emptyCompetitions[index].location = null;
+    emptyCompetitions[index].date = null;
+    emptyCompetitions[index].startTime = null;
+    emptyCompetitions[index].status = statuses[0];
+
+    waiting = false;
+  }
+
+  function deleteCompetition(tourId, tourName, competitionId) {}
 </script>
 
 {#if tours && tours.length > 0}
-  <h3>Lägg till ny tour</h3>
-  <form on:submit|preventDefault={addNewTour}>
-    <input
-      bind:value={newTourName}
-      on:input={checkTourName}
-      class:error={addNewTourEnabled}
-    />
-    <button type="submit" disabled={addNewTourEnabled}>Skapa ny tour</button>
-    <p
-      class:hideAddNewTourError={!addNewTourEnabled}
-      class:error={addNewTourEnabled}
-    >
-      Tour med namn {newTourName} finns redan!
-    </p>
-  </form>
-  {#if tours && tours.length > 0 && !waiting}
-    {#each tours as tour}
-      <table class="table">
-        <tr>
-          <td><input bind:value={tour.name} /></td>
-          <td>
-            <label>
-              <input type="checkbox" checked={tour.isActive} on:change="{() => setActiveTour(tour.id)}" />
-              Aktiv
-            </label>
-          </td>
-          <td>
+  <div class="container">
+    {#each tours as tour, tourIndex}
+      <div class="tour-row">
+        <button
+          class:expanded={tour.enabled}
+          on:click={() => toggleEnabled(tour._id)}>Expandera</button
+        >
+        <input bind:value={tour.name} />
+        <button class="btn-ok" on:click={() => updateTour(tour._id, tour.name)}
+          >Uppdatera</button
+        >
+        <button
+          class="btn-delete"
+          on:click={() => deleteTour(tour._id, tour.name)}>Ta bort</button
+        >
+      </div>
+      {#if tour.competitions && tour.competitions.length > 0}
+        {#each tour.competitions as competition}
+          <div class="competition-row" class:hidden={!tour.enabled}>
+            <input class="location-input" bind:value={competition.location} />
+            <input class="date-input" type="date" bind:value={competition.date} />
+            <input class="starttime-input" type="time" bind:value={competition.starttime} />
+            <select bind:value={competition.status}>
+              {#each statuses as item}
+                <option value={item}>{item}</option>
+              {/each}
+            </select>
             <button
               class="btn-ok"
-              on:click={() => updateTour(tour._id, tour.name)}>Uppdatera</button
+              on:click={() =>
+                updateCompetition(
+                  tour._id,
+                  competition._id,
+                  competition.location,
+                  competition.date,
+                  competition.starttime,
+                  competition.status
+                )}>Uppdatera</button
             >
-          </td>
-          <td>
             <button
               class="btn-delete"
-              on:click={() => deleteTour(tour._id, tour.name)}>Ta bort</button
+              on:click={() =>
+                deleteCompetition(tour._id, tour.name, competition._id)}
+              >Ta bort</button
             >
-          </td>
-        </tr>
-      </table>
+          </div>
+        {/each}
+        <div class="competition-row" class:hidden={!tour.enabled}>
+          <input bind:value={emptyCompetitions[tourIndex].location} />
+          <input type="date" bind:value={emptyCompetitions[tourIndex].date} />
+          <input
+            type="time"
+            bind:value={emptyCompetitions[tourIndex].starttime}
+          />
+          <select bind:value={emptyCompetitions[tourIndex].status}>
+            {#each statuses as item}
+              <option value={item}>{item}</option>
+            {/each}
+          </select>
+          <button
+            class="btn-ok"
+            on:click={() =>
+              addNewCompetition(
+                tour._id,
+                emptyCompetitions[0]._id,
+                emptyCompetitions[0].location,
+                emptyCompetitions[0].date,
+                emptyCompetitions[0].starttime,
+                emptyCompetitions[0].status,
+                emptyCompetitions[0],
+                tourIndex
+              )}>Lägg till ny tävling</button
+          >
+        </div>
+      {/if}
     {/each}
-  {:else}
-    <div class="loading">
-      <Spinner />
-    </div>
-  {/if}
+  </div>
 {:else}
   <div class="loading">
     <Spinner />
@@ -171,60 +279,20 @@
     padding: 0;
     margin: 0;
   }
-  h3 {
-    margin-bottom: 5px;
-    padding: 0px;
-  }
-  p {
-    margin: 0;
-    padding: 0;
-  }
-  .error {
-    color: red;
-  }
-  .hideAddNewTourError {
-    display: none;
-  }
   .container {
+    width: 100%;
     max-width: 500px;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
   }
-  .loading {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  input{
+    height: 25px;
   }
-  table,
-  td,
-  tr,
-  th {
-    margin: 10px;
-    border-spacing: 0;
-    border-collapse: collapse;
-    cursor: pointer;
+  select{
+    padding: 0;
+    height: 25px;
   }
-  td {
-    padding: 5px;
-  }
-  td > * {
-    vertical-align: middle;
-  }
-  table {
-    margin: 0;
-    max-width: 500px;
-    width: 100%;
-    border-bottom: 1px solid black;
-  }
-  tr {
-    background-color: #8baaad;
-  }
-  button {
-    margin: 0;
+  button{
+    padding: 0px 2px 0px 2px;
+    height: 25px;
   }
   .btn-delete {
     background-color: #ba2926;
@@ -233,5 +301,21 @@
   .btn-ok {
     background-color: #0b6e4f;
     color: white;
+  }
+  .hidden {
+    display: none;
+  }
+  input {
+    max-width: 125px;
+  }
+  .location-input{
+    width: 8em;
+  } 
+  .date-input{
+    width: 120em;
+  } 
+  .competition-row {
+    background-color: #888;
+    margin-bottom: 10px;
   }
 </style>

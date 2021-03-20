@@ -2,48 +2,62 @@
   import { onMount } from "svelte";
   import Spinner from "../components/Spinner.svelte";
 
-  let tours = null;
-  let tourResults = [];
-  let rowIds = [];
-  let playerStats = [];
-  let checked = false;
+  let tourStandings = [];
 
   onMount(async () => {
     let data = await fetch(`/api/tour`, {
       method: "POST",
       body: JSON.stringify({ action: "getAll" }),
     }).then((res) => res.json());
-    tours = data.result;
-    tours.forEach((tour, index) => {
-      console.log(tour);
-      rowIds.push({ id: tour._id, hidden: !tour.isActive });
-      tour.competitions.forEach((competition) => {
-        competition.players.forEach((player) => {
-          // Add new player to array of playerStats if name doesnt already exist
-          if (!playerStats.find((p) => p.name === player.name))
-            playerStats.push({ name: player.name, points: [], sum: null });
-          // Add the points of the player to the player stats object
-          playerStats.forEach((x) => {
-            if (x.name === player.name) {
-              x.points.push(player.points + player.extraPoints);
-            }
-          });
-        });
+    data.result.forEach((tour, tourIndex) => {
+      tourStandings.push({
+        id: tour._id,
+        name: tour.name,
+        expanded: !tour.isActive,
+        playerStandings: [],
       });
-      tourResults.push({ id: tour._id, name: tour.name, result: [] });
-      playerStats = setSum(playerStats);
-      playerStats = orderArray(playerStats, "sum", true);
-      tourResults[index].result = playerStats;
-    }); // foreach ends
+
+      tour.competitions.forEach((competition, competitionIndex) => {
+        if (competitionIndex == 0) {
+          // player doesnt exist in array
+          competition.players.forEach((player) => {
+            tourStandings[tourIndex].playerStandings.push({
+              name: player.name,
+              totalPoints: player.points,
+              twoLowestRemoved: null,
+              points: [player.points],
+            });
+          });
+        } else {
+          //player already exists
+          competition.players.forEach((player) => {
+            tourStandings[tourIndex].playerStandings.forEach((ps) => {
+              if (player.name == ps.name) {
+                ps.totalPoints += player.points;
+                ps.points.push(player.points);
+              }
+            });
+          });
+        }
+      });
+    });
+    tourStandings.forEach((tour) => {
+      tour.playerStandings.forEach((player) => {
+        player.twoLowestRemoved = setTwoLowestRemoved(player.points);
+      });
+      orderArray(tour.playerStandings, "twoLowestRemoved", true);
+    });
+    tourStandings = tourStandings;
   });
 
-  function setSum(array) {
-    array.forEach((x) => {
-      x.sum = x.points.reduce(function (a, b) {
-        return a + b;
-      }, 0);
-    });
-    return array;
+  function setTwoLowestRemoved(array) {
+    let copy = array.slice();
+    copy.sort();
+    copy.splice(0, 2);
+    let sum = copy.reduce(function (acc, val) {
+      return acc + val;
+    }, 0);
+    return sum;
   }
 
   function orderArray(array, property, descending) {
@@ -55,95 +69,52 @@
     return array;
   }
 
-  function removeSmallestValues(array, numberOfValuesToRemove, property) {
-    let temporaryArray = [...array];
-    temporaryArray.forEach((x) => {
-      //ascending sort, reverse a-b to b-a for descending sort
-      x[property] = x[property]
-        .sort((a, b) => a - b)
-        .slice(numberOfValuesToRemove);
-    });
-    temporaryArray = setSum(temporaryArray);
-    return temporaryArray;
-  }
-
-  function copyArray(array) {
-    return JSON.parse(JSON.stringify(array));
-  }
-
-  function toggleHeadlineId(index) {
-    rowIds[index].hidden = !rowIds[index].hidden;
-    rowIds = rowIds; // svelte reacts to assignments
-  }
-
-  function removeTwoLowestValues(checked, index) {
-    if (checked) {
-      let arrayCopy = copyArray(playerStats);
-      arrayCopy = removeSmallestValues(arrayCopy, 2, "points");
-      arrayCopy = orderArray(arrayCopy, "sum", true);
-      tourResults[index].result = arrayCopy;
-      tourResults = tourResults;
-    } else {
-      tourResults[index].result = playerStats;
-    }
+  function setTourExpanded(tourId) {
+    let i = tourStandings.findIndex((x) => x.id == tourId);
+    tourStandings[i].expanded = !tourStandings[i].expanded;
+    tourStandings = tourStandings;
   }
 </script>
 
-<div class="container">
-  {#if tourResults && tourResults.length > 0}
-    {#each tourResults as tr, tourIndex}
-      <div class="grid">
-        <span class="tour-header" on:click={() => toggleHeadlineId(tourIndex)}
-          >{tr.name}</span
-        >
-        <span class:hidden={rowIds[tourIndex].hidden} class="competition-header"
-          >Plats</span
-        >
-        <span class:hidden={rowIds[tourIndex].hidden} class="competition-header"
-          >Spelare</span
-        >
-        <span class:hidden={rowIds[tourIndex].hidden} class="competition-header"
-          >Poäng</span
-        >
-        {#each tr.result as r, resultIndex}
-          <span class:hidden={rowIds[tourIndex].hidden} class="competition-row"
-            >{resultIndex + 1}</span
-          >
-          <span class:hidden={rowIds[tourIndex].hidden} class="competition-row"
-            >{r.name}</span
-          >
-          <span class:hidden={rowIds[tourIndex].hidden} class="competition-row"
-            >{r.sum}
-          </span>
+{#if tourStandings.length > 0}
+  <small>* = Totalpoäng med de två lägsta resultaten borträknade</small>
+  {#each tourStandings as tour}
+    <table class="tour-table">
+      <tr class="tour-header" on:click={setTourExpanded(tour.id)}>
+        <th colspan="3">{tour.name}</th>
+      </tr>
+      <tr class="competition-header" class:hidden={tour.expanded}>
+        <th>Namn</th>
+        <th>Totala poäng</th>
+        <th>Resultat(*)</th>
+      </tr>
+      {#if tour.playerStandings && tour.playerStandings.length > 0}
+        {#each tour.playerStandings as player}
+          <tr class="competition" class:hidden={tour.expanded}>
+            <td>{player.name}</td>
+            <td>{player.totalPoints}</td>
+            <td>{player.twoLowestRemoved}</td>
+          </tr>
         {/each}
-        <span class:hidden={rowIds[tourIndex].hidden} class="competition-footer"
-          ><label
-            ><input
-              type="checkbox"
-              bind:checked
-              on:change={() => removeTwoLowestValues(checked, tourIndex)}
-            /> Visa med de två lägsta resultaten borttagna</label
-          ></span
-        >
-      </div>
-    {/each}
-  {:else}
-    <div class="loading">
-      <Spinner />
-    </div>
-  {/if}
-</div>
+      {/if}
+    </table>
+  {/each}
+{:else}
+  <div class="loading">
+    <Spinner />
+  </div>
+{/if}
 
 <style>
-  :global(body) {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-  }
-  .container {
-    height: 100%;
-    max-width: 500px;
-    width: 100%;
+  table,
+  td,
+  tr,
+  th {
+    margin: 10px;
+    border-spacing: 0;
+    border-collapse: collapse;
+    cursor: pointer;
+    text-align: left;
   }
   .loading {
     width: 100%;
@@ -153,46 +124,21 @@
     justify-content: center;
     align-items: center;
   }
-  .grid {
-    margin-left: auto;
-    margin-right: auto;
-    min-width: 320px;
+  .tour-table {
     max-width: 500px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-areas: "header header header";
-    border-left: 1px solid black;
-    border-right: 1px solid black;
-    border-top: 1px solid black;
+    width: 100%;
+    /* margin-left: auto;
+    margin-right: auto; */
   }
-
-  .grid > span {
-    padding: 4px 2px;
-  }
-
   .tour-header {
-    grid-area: header;
-    text-align: center;
-    background-color: #274c77;
-    color: #e7ecef;
-    border-bottom: 1px solid black;
+    background-color: #6da34d;
+    color: white;
+    height: 40px;
   }
-
-  .competition-header {
-    background-color: #478978;
-    color: #e7ecef;
-    border-bottom: 1px solid black;
+  .competition {
+    background-color: #c5e99b;
+    border-bottom: 1px solid #6da34d;
   }
-
-  .competition-footer {
-    background-color: #478978;
-    color: #e7ecef;
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
-    grid-column: auto / span 3;
-    text-align: center;
-  }
-
   .hidden {
     display: none;
   }

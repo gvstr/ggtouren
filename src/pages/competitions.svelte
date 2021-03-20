@@ -9,13 +9,12 @@
       method: "POST",
       body: JSON.stringify({ action: "getAll" }),
     }).then((res) => res.json());
-    console.log(data)
     data.result.forEach((t) => {
       let newTour = {
         id: t._id,
         name: t.name,
         competitions: [],
-        expanded: true,
+        expanded: !t.isActive,
       };
       t.competitions.forEach((c) => {
         let newCompetition = {
@@ -59,7 +58,6 @@
     let i = tourData.findIndex((x) => x.id == tourId);
     tourData[i].expanded = !tourData[i].expanded;
     tourData = tourData;
-    console.log(tourData);
   }
 
   function setCompetitionExpanded(tourId, competitionId) {
@@ -155,7 +153,7 @@
     height: 40px;
   }
   .competition-header {
-    background-color: #c5e99b;
+    /* background-color: #c5e99b; */
     text-align: left;
     border-bottom: 1px solid black;
   }
