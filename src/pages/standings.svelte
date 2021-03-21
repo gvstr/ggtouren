@@ -23,7 +23,8 @@
           competition.players.forEach((player) => {
             tourStandings[tourIndex].playerStandings.push({
               name: player.name,
-              totalPoints: player.points,
+              totalPoints: player.points + player.extraPoints,
+              extraPoints: player.extraPoints,
               twoLowestRemoved: null,
               points: [player.points],
             });
@@ -33,7 +34,7 @@
           competition.players.forEach((player) => {
             tourStandings[tourIndex].playerStandings.forEach((ps) => {
               if (player.name == ps.name) {
-                ps.totalPoints += player.points;
+                ps.totalPoints += player.points + player.extraPoints;
                 ps.points.push(player.points);
               }
             });
@@ -43,7 +44,7 @@
     });
     tourStandings.forEach((tour) => {
       tour.playerStandings.forEach((player) => {
-        player.twoLowestRemoved = setTwoLowestRemoved(player.points);
+        player.twoLowestRemoved = setTwoLowestRemoved(player.points) + player.extraPoints;
       });
       orderArray(tour.playerStandings, "twoLowestRemoved", true);
     });
@@ -51,13 +52,18 @@
   });
 
   function setTwoLowestRemoved(array) {
-    let copy = array.slice();
-    copy.sort();
-    copy.splice(0, 2);
-    let sum = copy.reduce(function (acc, val) {
-      return acc + val;
-    }, 0);
-    return sum;
+    if (array.length > 2) {
+      let copy = array.slice();
+      copy.sort();
+      copy.splice(0, 2);
+      let sum = copy.reduce(function (acc, val) {
+        return acc + val;
+      }, 0);
+      return sum;
+    }
+    else{
+      return array.reduce(function(acc, val) { return acc + val; }, 0)
+    }
   }
 
   function orderArray(array, property, descending) {
@@ -77,7 +83,7 @@
 </script>
 
 {#if tourStandings.length > 0}
-  <small>* = Totalpoäng med de två lägsta resultaten borträknade</small>
+  <small>Resultat = Totalpoäng med de två lägsta resultaten borträknade</small>
   {#each tourStandings as tour}
     <table class="tour-table">
       <tr class="tour-header" on:click={setTourExpanded(tour.id)}>
@@ -86,7 +92,7 @@
       <tr class="competition-header" class:hidden={tour.expanded}>
         <th>Namn</th>
         <th>Totala poäng</th>
-        <th>Resultat(*)</th>
+        <th>Resultat</th>
       </tr>
       {#if tour.playerStandings && tour.playerStandings.length > 0}
         {#each tour.playerStandings as player}

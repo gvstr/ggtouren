@@ -89,7 +89,12 @@ async function updateTour(client, event) {
     const result = await client
       .db("gg-tour")
       .collection("tours")
-      .replaceOne({ _id: ObjectId(body.id) }, { "name": body.document.name, "isActive": body.document.isActive, "competitions": body.document.competitions })
+      .replaceOne(
+        { _id: ObjectId(body.id) }, {
+        "name": body.document.name,
+        "isActive": body.document.isActive,
+        "competitions": body.document.competitions
+      })
     return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
   catch (e) {
@@ -101,15 +106,10 @@ async function updateTour(client, event) {
 async function setActiveTour(client, event) {
   try {
     const body = JSON.parse(event.body);
-    const result_set_false = await client
-      .db("gg-tour")
-      .collection("tours")
-      .updateMany({}, { $set: { isActive: false } });
-    const result_set_true = await client
-      .db("gg-tour")
-      .collection("tours")
-      .updateOne({ _id: ObjectId(body.id) }, { $set: { isActive: true } });
-    return { statusCode: 200, body: JSON.stringify({ message: result_set_true }) };
+    let collection = await client.db("gg-tour").collection("tours");
+    await collection.updateMany({}, { $set: { isActive: false } })
+    await collection.updateOne({ _id: ObjectId(body.tourId) }, { $set: { isActive: true } });
+    return { statusCode: 200, body: JSON.stringify({ message: "something" }) };
   }
   catch (e) {
     console.log(e)
@@ -120,6 +120,7 @@ async function setActiveTour(client, event) {
 async function updateCompetition(client, event) {
   try {
     const body = JSON.parse(event.body);
+    console.log(body)
     const result = await client
       .db("gg-tour")
       .collection("tours")
@@ -131,6 +132,7 @@ async function updateCompetition(client, event) {
             "competitions.$[i].date": body.date,
             "competitions.$[i].starttime": body.starttime,
             "competitions.$[i].status": body.status,
+            "competitions.$[i].players": body.players
           },
         },
         {
@@ -140,6 +142,7 @@ async function updateCompetition(client, event) {
             }
           ]
         });
+    console.log(`matched: ${result.result.n} modified: ${result.result.nModified} ok: ${result.result.ok}`)
     return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
   catch (e) {

@@ -154,6 +154,7 @@
     if (confirm(`Vill du uppdatera tävling i tour ${name}?`)) {
       waiting = true;
       let competition = getCompetitionById(tourId, competitionId);
+      console.log(tourId + " " + competitionId)
       let data = await fetch(`/api/tour`, {
         method: "POST",
         body: JSON.stringify({
@@ -164,6 +165,7 @@
           date: competition.date,
           starttime: competition.starttime,
           status: competition.status,
+          players: competition.players
         }),
       }).then((res) => res.json());
       await fetchAllTours();
@@ -192,8 +194,19 @@
     emptyCompetitions[tourIndex].status = statuses[0];
   }
 
-  function setTourAsActive(tourId, tourName) {
-    console.log("changing active");
+  async function setTourAsActive(tourId, tourName) {
+    if (confirm(`Vill du ändra aktiv tour till ${tourName}?`)) {
+      waiting = true;
+      let data = await fetch(`/api/tour`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "setActiveTour",
+          tourId: tourId,
+        }),
+      }).then((res) => res.json());
+      await fetchAllTours();
+      waiting = false;
+    }
   }
 </script>
 
@@ -290,6 +303,8 @@
             <td>Poäng</td>
             <td>Extrapoäng</td>
             <td>Birdies</td>
+            <td />
+            <td />
           </tr>
           {#each competition.players as player}
             <tr
@@ -297,9 +312,32 @@
               class:hidden={!competition.expanded || !tour.expanded}
             >
               <td>{player.name}</td>
-              <td>{player.points}</td>
-              <td>{player.extraPoints}</td>
-              <td>{player.birdies}</td>
+              <td
+                ><input
+                  type="number"
+                  min="0"
+                  max="9"
+                  bind:value={player.points}
+                /></td
+              >
+              <td
+                ><input
+                  type="number"
+                  min="0"
+                  max="18"
+                  bind:value={player.extraPoints}
+                /></td
+              >
+              <td
+                ><input
+                  type="number"
+                  min="0"
+                  max="18"
+                  bind:value={player.birdies}
+                /></td
+              >
+              <td />
+              <td />
             </tr>
           {/each}
         {/each}
@@ -381,11 +419,6 @@
     color: white;
     margin: 0;
   }
-  .btn-change {
-    background-color: yellow;
-    color: black;
-    margin: 0;
-  }
   .btn-delete {
     background-color: red;
     color: white;
@@ -409,7 +442,7 @@
     align-items: center;
   }
   .tour-table {
-    max-width: 700px;
+    max-width: 750px;
     width: 100%;
     margin-left: auto;
     margin-right: auto;
