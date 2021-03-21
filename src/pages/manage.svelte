@@ -1,15 +1,13 @@
 <script>
   import { onMount } from "svelte";
   import Spinner from "../components/Spinner.svelte";
-  import Competitions from "./competitions.svelte";
   import { players } from "../components/players";
 
-  let tours = null;
-  let newTourName = null;
-  let addNewTourEnabled = false;
-  let waiting = false;
+  let tourData = [];
   let statuses = ["Preliminär", "Bokad", "Spelad"];
   let emptyCompetitions = [];
+  let newTourName = null;
+  let waiting = false;
 
   onMount(async () => {
     await fetchAllTours();
@@ -20,20 +18,30 @@
       method: "POST",
       body: JSON.stringify({ action: "getAll" }),
     }).then((res) => res.json());
-    tours = data.result;
-
-    tours.map((t) => {
-      t.enabled = false;
+    tourData = data.result;
+    tourData.forEach((x) => {
       emptyCompetitions.push({
         location: null,
         date: null,
-        startTime: null,
         status: statuses[0],
-        players: players,
+        starttime: null,
       });
     });
+    tourData = tourData;
+  }
 
-    console.log(tours);
+  function setTourExpanded(tourId) {
+    let i = tourData.findIndex((x) => x._id == tourId);
+    tourData[i].expanded = !tourData[i].expanded;
+    tourData = tourData;
+  }
+
+  function setCompetitionExpanded(tourId, competitionId) {
+    let ti = tourData.findIndex((x) => x._id == tourId);
+    let ci = tourData[ti].competitions.findIndex((x) => x._id == competitionId);
+    tourData[ti].competitions[ci].expanded = !tourData[ti].competitions[ci]
+      .expanded;
+    tourData = tourData;
   }
 
   async function addNewTour() {
@@ -49,17 +57,6 @@
     await fetchAllTours();
     waiting = false;
     newTourName = null;
-  }
-
-  function checkTourName() {
-    for (let i = 0; i < tours.length; i++) {
-      if (tours[i].name == newTourName) {
-        addNewTourEnabled = true;
-        break;
-      } else {
-        addNewTourEnabled = false;
-      }
-    }
   }
 
   async function deleteTour(id, name) {
@@ -97,7 +94,7 @@
   }
 
   function getTourById(id) {
-    let tour = tours.filter((x) => x._id == id);
+    let tour = tourData.filter((x) => x._id == id);
     tour.map((t) => {
       delete t.enabled;
       return t;
@@ -105,168 +102,254 @@
     return tour;
   }
 
-  async function setActiveTour(id) {
-    waiting = true;
-    let data = await fetch(`/api/tour`, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "setActiveTour",
-        isActive: newTourName,
-      }),
-    }).then((res) => res.json());
-    await fetchAllTours();
-    waiting = false;
+  async function addNewCompetition(tourId, index, name) {
+    if (
+      emptyCompetitions[index].location &&
+      emptyCompetitions[index].date &&
+      emptyCompetitions[index].starttime
+    ) {
+      if (confirm(`Vill du lägga till en tävling i tour ${name}?`)) {
+        waiting = true;
+        let data = await fetch(`/api/tour`, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "addNewCompetition",
+            tourId: tourId,
+            location: emptyCompetitions[index].location,
+            date: emptyCompetitions[index].date,
+            starttime: emptyCompetitions[index].starttime,
+            status: emptyCompetitions[index].status,
+            players: players,
+          }),
+        }).then((res) => res.json());
+        await fetchAllTours();
+        emptyCompetitions[index].location = null;
+        emptyCompetitions[index].date = null;
+        emptyCompetitions[index].starttime = null;
+        emptyCompetitions[index].status = statuses[0];
+        waiting = false;
+      }
+    } else {
+      alert("Fyll i alla värden!");
+    }
   }
 
-  function toggleEnabled(id) {
-    tours.forEach((x) => {
-      if (x._id === id) {
-        x.enabled = !x.enabled;
+  async function deleteCompetition(tourId, competitionId, name) {
+    if (confirm(`Vill du uppdatera tävling i tour ${name}?`)) {
+      waiting = true;
+      let data = await fetch(`/api/tour`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "deleteCompetition",
+          tourId: tourId,
+          competitionId: competitionId,
+        }),
+      }).then((res) => res.json());
+      await fetchAllTours();
+      waiting = false;
+    }
+  }
+
+  async function updateCompetition(tourId, competitionId, name) {
+    if (confirm(`Vill du uppdatera tävling i tour ${name}?`)) {
+      waiting = true;
+      let competition = getCompetitionById(tourId, competitionId);
+      let data = await fetch(`/api/tour`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "updateCompetition",
+          tourId: tourId,
+          competitionId: competitionId,
+          location: competition.location,
+          date: competition.date,
+          starttime: competition.starttime,
+          status: competition.status,
+        }),
+      }).then((res) => res.json());
+      await fetchAllTours();
+      waiting = false;
+    }
+  }
+
+  function getCompetitionById(tourId, competitionId) {
+    let result = null;
+    tourData.forEach((tour) => {
+      if (tour._id == tourId) {
+        tour.competitions.forEach((competition) => {
+          if (competition._id == competitionId) {
+            result = competition;
+          }
+        });
       }
     });
-    tours = tours;
+    return result;
   }
 
-  async function updateCompetition(
-    tourId,
-    competitionId,
-    location,
-    date,
-    startTime,
-    status
-  ) {
-    waiting = true;
-    let data = await fetch(`/api/tour`, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "updateCompetition",
-        tourId: tourId,
-        competitionId: competitionId,
-        location: location,
-        date: date,
-        starttime: startTime,
-        status: status,
-      }),
-    }).then((res) => res.json());
-    await fetchAllTours();
-    waiting = false;
+  function resetNewCompetition(tourIndex) {
+    emptyCompetitions[tourIndex].location = null;
+    emptyCompetitions[tourIndex].date = null;
+    emptyCompetitions[tourIndex].starttime = null;
+    emptyCompetitions[tourIndex].status = statuses[0];
   }
 
-  async function addNewCompetition(
-    tourId,
-    competitionId,
-    location,
-    date,
-    startTime,
-    status,
-    players,
-    index
-  ) {
-    waiting = true;
-    let data = await fetch(`/api/tour`, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "addNewCompetition",
-        tourId: tourId,
-        competitionId: competitionId,
-        location: location,
-        date: date,
-        starttime: startTime,
-        status: status,
-        players: players,
-      }),
-    }).then((res) => res.json());
-    await fetchAllTours();
-
-    emptyCompetitions[index].location = null;
-    emptyCompetitions[index].date = null;
-    emptyCompetitions[index].startTime = null;
-    emptyCompetitions[index].status = statuses[0];
-
-    waiting = false;
+  function setTourAsActive(tourId, tourName) {
+    console.log("changing active");
   }
-
-  function deleteCompetition(tourId, tourName, competitionId) {}
 </script>
 
-{#if tours && tours.length > 0}
-  <div class="container">
-    {#each tours as tour, tourIndex}
-      <div class="tour-row">
-        <button
-          class:expanded={tour.enabled}
-          on:click={() => toggleEnabled(tour._id)}>Expandera</button
+<table class="tour-table">
+  <tr class="tour-header">
+    <th colspan="3"
+      ><input type="text" bind:value={newTourName} placeholder="Namn" /></th
+    >
+    <th colspan="1"
+      ><button class="btn-update" on:click={() => addNewTour()}
+        >Lägg till ny tour</button
+      ></th
+    >
+  </tr>
+</table>
+{#if tourData.length > 0 || waiting}
+  {#each tourData as tour, tourIndex}
+    <table class="tour-table">
+      <tr class="tour-header" on:click={setTourExpanded(tour._id)}>
+        <th colspan="3"><input type="text" bind:value={tour.name} /></th>
+        <th colspan="1">
+          <label>
+            <input
+              disabled={tour.isActive}
+              type="checkbox"
+              checked={tour.isActive}
+              on:change={() => setTourAsActive(tour._id, tour.name)}
+            />
+            Aktiv
+          </label>
+        </th>
+        <th colspan="1"
+          ><button
+            class="btn-update"
+            on:click={() => updateTour(tour._id, tour.name)}>Uppdatera</button
+          ></th
         >
-        <input bind:value={tour.name} />
-        <button class="btn-ok" on:click={() => updateTour(tour._id, tour.name)}
-          >Uppdatera</button
+        <th colspan="1"
+          ><button
+            class="btn-delete"
+            on:click={() => deleteTour(tour._id, tour.name)}>Ta bort</button
+          ></th
         >
-        <button
-          class="btn-delete"
-          on:click={() => deleteTour(tour._id, tour.name)}>Ta bort</button
-        >
-      </div>
+      </tr>
+      <tr class="competition-header" class:hidden={!tour.expanded}>
+        <th>Bana</th>
+        <th>Datum</th>
+        <th>Status</th>
+        <th>Starttid</th>
+        <th>Ändra</th>
+        <th>Ta bort</th>
+      </tr>
       {#if tour.competitions && tour.competitions.length > 0}
         {#each tour.competitions as competition}
-          <div class="competition-row" class:hidden={!tour.enabled}>
-            <input class="location-input" bind:value={competition.location} />
-            <input class="date-input" type="date" bind:value={competition.date} />
-            <input class="starttime-input" type="time" bind:value={competition.starttime} />
-            <select bind:value={competition.status}>
-              {#each statuses as item}
-                <option value={item}>{item}</option>
-              {/each}
-            </select>
-            <button
-              class="btn-ok"
-              on:click={() =>
-                updateCompetition(
-                  tour._id,
-                  competition._id,
-                  competition.location,
-                  competition.date,
-                  competition.starttime,
-                  competition.status
-                )}>Uppdatera</button
+          <tr
+            class="competition"
+            class:hidden={!tour.expanded}
+            on:click={setCompetitionExpanded(tour._id, competition._id)}
+          >
+            <td><input type="text" bind:value={competition.location} /></td>
+            <td><input type="date" bind:value={competition.date} /></td>
+            <td>
+              <select bind:value={competition.status}>
+                {#each statuses as status}
+                  <option value={status}>
+                    {status}
+                  </option>
+                {/each}
+              </select>
+            </td>
+            <td><input type="time" bind:value={competition.starttime} /></td>
+            <td>
+              <button
+                class="btn-update"
+                on:click={() =>
+                  updateCompetition(tour._id, competition._id, tour.name)}
+                >Uppdatera</button
+              >
+            </td>
+            <td>
+              <button
+                class="btn-delete"
+                on:click={() =>
+                  deleteCompetition(tour._id, competition._id, tour.name)}
+                >Ta bort
+              </button>
+            </td>
+          </tr>
+          <tr
+            class="player-header"
+            class:hidden={!competition.expanded || !tour.expanded}
+          >
+            <td>Spelare</td>
+            <td>Poäng</td>
+            <td>Extrapoäng</td>
+            <td>Birdies</td>
+          </tr>
+          {#each competition.players as player}
+            <tr
+              class="player"
+              class:hidden={!competition.expanded || !tour.expanded}
             >
-            <button
-              class="btn-delete"
-              on:click={() =>
-                deleteCompetition(tour._id, tour.name, competition._id)}
-              >Ta bort</button
-            >
-          </div>
+              <td>{player.name}</td>
+              <td>{player.points}</td>
+              <td>{player.extraPoints}</td>
+              <td>{player.birdies}</td>
+            </tr>
+          {/each}
         {/each}
-        <div class="competition-row" class:hidden={!tour.enabled}>
-          <input bind:value={emptyCompetitions[tourIndex].location} />
-          <input type="date" bind:value={emptyCompetitions[tourIndex].date} />
-          <input
-            type="time"
-            bind:value={emptyCompetitions[tourIndex].starttime}
-          />
+      {/if}
+      <tr class="competition" class:hidden={!tour.expanded}>
+        <td
+          ><input
+            type="text"
+            bind:value={emptyCompetitions[tourIndex].location}
+            placeholder="Bana"
+          /></td
+        >
+        <td
+          ><input
+            type="date"
+            bind:value={emptyCompetitions[tourIndex].date}
+          /></td
+        >
+        <td>
           <select bind:value={emptyCompetitions[tourIndex].status}>
-            {#each statuses as item}
-              <option value={item}>{item}</option>
+            {#each statuses as status}
+              <option value={status}>
+                {status}
+              </option>
             {/each}
           </select>
+        </td>
+        <td
+          ><input
+            type="time"
+            bind:value={emptyCompetitions[tourIndex].starttime}
+          /></td
+        >
+        <td>
           <button
-            class="btn-ok"
-            on:click={() =>
-              addNewCompetition(
-                tour._id,
-                emptyCompetitions[0]._id,
-                emptyCompetitions[0].location,
-                emptyCompetitions[0].date,
-                emptyCompetitions[0].starttime,
-                emptyCompetitions[0].status,
-                emptyCompetitions[0],
-                tourIndex
-              )}>Lägg till ny tävling</button
+            class="btn-update"
+            on:click={() => addNewCompetition(tour._id, tourIndex, tour.name)}
+            >Lägg till</button
           >
-        </div>
-      {/if}
-    {/each}
-  </div>
+        </td>
+        <td>
+          <button
+            class="btn-delete"
+            on:click={() => resetNewCompetition(tourIndex)}>Rensa</button
+          >
+        </td>
+        <td />
+      </tr>
+    </table>
+  {/each}
 {:else}
   <div class="loading">
     <Spinner />
@@ -279,43 +362,79 @@
     padding: 0;
     margin: 0;
   }
-  .container {
-    width: 100%;
-    max-width: 500px;
+  input {
+    margin: 0;
+    padding: 2px;
   }
-  input{
-    height: 25px;
+  input[type="text"] {
+    width: 8em;
   }
-  select{
-    padding: 0;
-    height: 25px;
+  input[type="date"] {
+    width: 9em;
   }
-  button{
-    padding: 0px 2px 0px 2px;
-    height: 25px;
+  select {
+    margin: 0;
+    padding: 2px;
+  }
+  .btn-update {
+    background-color: green;
+    color: white;
+    margin: 0;
+  }
+  .btn-change {
+    background-color: yellow;
+    color: black;
+    margin: 0;
   }
   .btn-delete {
-    background-color: #ba2926;
+    background-color: red;
     color: white;
+    margin: 0;
   }
-  .btn-ok {
-    background-color: #0b6e4f;
+  table,
+  td,
+  tr,
+  th {
+    margin: 10px;
+    border-spacing: 0;
+    border-collapse: collapse;
+    cursor: pointer;
+  }
+  .loading {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .tour-table {
+    max-width: 700px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .tour-header {
+    background-color: #6da34d;
     color: white;
+    height: 40px;
+  }
+  .competition-header {
+    /* background-color: #c5e99b; */
+    text-align: left;
+    border-bottom: 1px solid black;
+  }
+  .competition {
+    background-color: #c5e99b;
+    border-bottom: 1px solid #6da34d;
+  }
+  .player-header {
+    background-color: #9cbdd3;
+  }
+  .player {
+    background-color: #f1f7ed;
   }
   .hidden {
     display: none;
-  }
-  input {
-    max-width: 125px;
-  }
-  .location-input{
-    width: 8em;
-  } 
-  .date-input{
-    width: 120em;
-  } 
-  .competition-row {
-    background-color: #888;
-    margin-bottom: 10px;
   }
 </style>

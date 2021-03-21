@@ -22,7 +22,9 @@ exports.handler = async (event, context) => {
       case "updateCompetition":
         return await updateCompetition(client, event);
       case "addNewCompetition":
-        return await updateCompetition(client, event);
+        return await addNewCompetition(client, event);
+      case "deleteCompetition":
+        return await deleteCompetition(client, event);
       default:
         return { statusCode: 500, body: JSON.stringify({ message: "Okänt fel", status: 500 }) };
     }
@@ -161,10 +163,29 @@ async function addNewCompetition(client, event) {
               location: body.location,
               date: body.date,
               starttime: body.starttime,
+              status: body.status,
               players: body.players
             }
           }
         }
+      );
+    return { statusCode: 200, body: JSON.stringify({ message: result }) };
+  }
+  catch (e) {
+    console.log(e)
+    return { statusCode: 500, body: JSON.stringify({ message: e }) };
+  }
+}
+
+async function deleteCompetition(client, event) {
+  try {
+    const body = JSON.parse(event.body);
+    const result = await client
+      .db("gg-tour")
+      .collection("tours")
+      .updateOne(
+        { _id: ObjectId(body.tourId) },
+        { $pull: { competitions: { _id: ObjectId(body.competitionId) } } }
       );
     return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
