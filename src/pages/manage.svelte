@@ -154,6 +154,7 @@
     if (confirm(`Vill du uppdatera tävling i tour ${name}?`)) {
       waiting = true;
       let competition = getCompetitionById(tourId, competitionId);
+      console.log(`Date: ${competition.date}`)
       console.log(tourId + " " + competitionId)
       let data = await fetch(`/api/tour`, {
         method: "POST",

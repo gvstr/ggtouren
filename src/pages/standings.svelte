@@ -9,62 +9,9 @@
       method: "POST",
       body: JSON.stringify({ action: "getAll" }),
     }).then((res) => res.json());
-    data.result.forEach((tour, tourIndex) => {
-      tourStandings.push({
-        id: tour._id,
-        name: tour.name,
-        expanded: !tour.isActive,
-        playerStandings: [],
-      });
 
-      tour.competitions.forEach((competition, competitionIndex) => {
-        if (competitionIndex == 0) {
-          // player doesnt exist in array
-          competition.players.forEach((player) => {
-            tourStandings[tourIndex].playerStandings.push({
-              name: player.name,
-              totalPoints: player.points + player.extraPoints,
-              extraPoints: player.extraPoints,
-              twoLowestRemoved: null,
-              points: [player.points],
-            });
-          });
-        } else {
-          //player already exists
-          competition.players.forEach((player) => {
-            tourStandings[tourIndex].playerStandings.forEach((ps) => {
-              if (player.name == ps.name) {
-                ps.totalPoints += player.points + player.extraPoints;
-                ps.points.push(player.points);
-              }
-            });
-          });
-        }
-      });
-    });
-    tourStandings.forEach((tour) => {
-      tour.playerStandings.forEach((player) => {
-        player.twoLowestRemoved = setTwoLowestRemoved(player.points) + player.extraPoints;
-      });
-      orderArray(tour.playerStandings, "twoLowestRemoved", true);
-    });
-    tourStandings = tourStandings;
+    tourStandings = sortScores(data);
   });
-
-  function setTwoLowestRemoved(array) {
-    if (array.length > 2) {
-      let copy = array.slice();
-      copy.sort();
-      copy.splice(0, 2);
-      let sum = copy.reduce(function (acc, val) {
-        return acc + val;
-      }, 0);
-      return sum;
-    }
-    else{
-      return array.reduce(function(acc, val) { return acc + val; }, 0)
-    }
-  }
 
   function orderArray(array, property, descending) {
     if (descending) {
@@ -80,6 +27,58 @@
     tourStandings[i].expanded = !tourStandings[i].expanded;
     tourStandings = tourStandings;
   }
+
+  function sortScores(data) {
+    let score = [];
+    data.result.forEach((tour, tourIndex) => {
+      // If the new array does not already contain a post with this name, add it
+      if (!score.some((t) => t.name === tour.name)) {
+        score.push({
+          id: tour._id,
+          name: tour.name,
+          expanded: !tour.isActive,
+          players: [],
+        });
+      }
+      tour.competitions.forEach((competition) => {
+        competition.players.forEach((player) => {
+          // If tour in score array does not contain player name already, add it
+          if (!score[tourIndex].players.some((p) => p.name === player.name)) {
+            score[tourIndex].players.push({
+              name: player.name,
+              totalPoints: player.points + player.extraPoints,
+              twoLowestRemoved: 0,
+              points: [player.points + player.extraPoints],
+            });
+          } else {
+            let currentPlayer = score[tourIndex].players.find(
+              (p) => p.name === player.name
+            );
+            currentPlayer.totalPoints += player.points + player.extraPoints;
+            currentPlayer.points.push(player.points + player.extraPoints);
+          }
+        }); // end loop
+      }); // end loop
+    }); // end loop
+
+    score.forEach((tour, index) => {
+      tour.players.forEach((player) => {
+        if (player.points.length > 2) {
+          player.points.sort((a, b) => b - a);
+          let t = player.points.filter(
+            (element, index) => index < player.points.length - 2
+          );
+          player.twoLowestRemoved = t.reduce((a, b) => a + b);
+        }
+      }); // end loop
+    }); // end loop
+
+    score.forEach((tour) => {
+      orderArray(tour.players, "twoLowestRemoved", true);
+    });
+
+    return score;
+  }
 </script>
 
 {#if tourStandings.length > 0}
@@ -94,8 +93,8 @@
         <th>Totala poäng</th>
         <th>Resultat</th>
       </tr>
-      {#if tour.playerStandings && tour.playerStandings.length > 0}
-        {#each tour.playerStandings as player}
+      {#if tour.players && tour.players.length > 0}
+        {#each tour.players as player}
           <tr class="competition" class:hidden={tour.expanded}>
             <td>{player.name}</td>
             <td>{player.totalPoints}</td>
