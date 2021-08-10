@@ -41,21 +41,34 @@
         });
       }
       tour.competitions.forEach((competition) => {
+        let played = competition.status == "Spelad";
         competition.players.forEach((player) => {
           // If tour in score array does not contain player name already, add it
           if (!score[tourIndex].players.some((p) => p.name === player.name)) {
-            score[tourIndex].players.push({
-              name: player.name,
-              totalPoints: player.points + player.extraPoints,
-              twoLowestRemoved: 0,
-              points: [player.points + player.extraPoints],
-            });
+            if (played) {
+              score[tourIndex].players.push({
+                name: player.name,
+                totalPoints: player.points + player.extraPoints,
+                twoLowestRemoved: 0,
+                points: [player.points + player.extraPoints],
+              });
+            }
+            else{
+              score[tourIndex].players.push({
+                name: player.name,
+                totalPoints: player.points + player.extraPoints,
+                twoLowestRemoved: 0,
+                //points: [player.points + player.extraPoints],
+              });
+            }
           } else {
             let currentPlayer = score[tourIndex].players.find(
               (p) => p.name === player.name
             );
             currentPlayer.totalPoints += player.points + player.extraPoints;
-            currentPlayer.points.push(player.points + player.extraPoints);
+            if (played) {
+              currentPlayer.points.push(player.points + player.extraPoints);
+            }
           }
         }); // end loop
       }); // end loop
@@ -82,7 +95,7 @@
 </script>
 
 {#if tourStandings.length > 0}
-  <small>Resultat = Totalpoäng med de två lägsta resultaten borträknade</small>
+  <small>Resultat = Totalpoäng med de två lägsta spelade resultaten borträknade</small>
   {#each tourStandings as tour}
     <table class="tour-table">
       <tr class="tour-header" on:click={setTourExpanded(tour.id)}>
