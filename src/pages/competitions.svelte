@@ -63,8 +63,8 @@
   function setCompetitionExpanded(tourId, competitionId) {
     let ti = tourData.findIndex((x) => x.id == tourId);
     let ci = tourData[ti].competitions.findIndex((x) => x.id == competitionId);
-    tourData[ti].competitions[ci].expanded = !tourData[ti].competitions[ci]
-      .expanded;
+    tourData[ti].competitions[ci].expanded =
+      !tourData[ti].competitions[ci].expanded;
     tourData = tourData;
   }
 </script>
@@ -98,7 +98,11 @@
             class:hidden={competition.expanded || tour.expanded}
           >
             <td>Spelare</td>
-            <td>Poäng</td>
+            {#if tour.name == "2020" || tour.name == "2021"}
+              <td>Poäng</td>
+            {:else}
+              <td>Nettoslag</td>
+            {/if}
             <td>Extrapoäng</td>
             <td>Birdies</td>
           </tr>

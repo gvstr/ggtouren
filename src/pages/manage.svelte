@@ -324,8 +324,8 @@
               <td
                 ><input
                   type="number"
-                  min="0"
-                  max="18"
+                  min="-99"
+                  max="99"
                   bind:value={player.extraPoints}
                 /></td
               >

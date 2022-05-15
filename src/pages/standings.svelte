@@ -52,8 +52,7 @@
                 twoLowestRemoved: 0,
                 points: [player.points + player.extraPoints],
               });
-            }
-            else{
+            } else {
               score[tourIndex].players.push({
                 name: player.name,
                 totalPoints: player.points + player.extraPoints,
@@ -76,7 +75,7 @@
 
     score.forEach((tour, index) => {
       tour.players.forEach((player) => {
-        if (player.points.length > 2) {
+        if (player.points != null && player.points.length > 2) {
           player.points.sort((a, b) => b - a);
           let t = player.points.filter(
             (element, index) => index < player.points.length - 2
@@ -95,7 +94,9 @@
 </script>
 
 {#if tourStandings.length > 0}
-  <small>Resultat = Totalpoäng med de två lägsta spelade resultaten borträknade</small>
+  <small
+    >Resultat = Totalpoäng med de två lägsta spelade resultaten borträknade</small
+  >
   {#each tourStandings as tour}
     <table class="tour-table">
       <tr class="tour-header" on:click={setTourExpanded(tour.id)}>
