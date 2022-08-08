@@ -10,5 +10,6 @@ export let players = [
         { name: "Jan-Erik", points: 0, extraPoints: 0, birdies: 0 },
         { name: "Bengt-Åke", points: 0, extraPoints: 0, birdies: 0 },
         { name: "Svante", points: 0, extraPoints: 0, birdies: 0 },
-        { name: "Gustav", points: 0, extraPoints: 0, birdies: 0 }
+        { name: "Gustav", points: 0, extraPoints: 0, birdies: 0 },
+        { name: "Erik", points: 0, extraPoints: 0, birdies: 0 }
       ]
