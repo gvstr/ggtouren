@@ -104,10 +104,10 @@
       </tr>
       <tr class="competition-header" class:hidden={tour.expanded}>
         <th>Namn</th>
-        {#if tour.name == "2020" || tour.name == "2021"}
-          <th>Totala poäng</th>
-        {:else}
+        {#if tour.name == "2022"}
           <th>Total nettoslag</th>
+        {:else}
+          <th>Totala poäng</th>
         {/if}
         <th>Resultat</th>
       </tr>
