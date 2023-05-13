@@ -74,7 +74,7 @@ async function deleteTour(client, event) {
     const result = await client
       .db("gg-tour")
       .collection("tours")
-      .deleteOne({ _id: ObjectId(body.id) })
+      .deleteOne({ _id: new ObjectId(body.id) })
     return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
   catch (e) {
@@ -90,7 +90,7 @@ async function updateTour(client, event) {
       .db("gg-tour")
       .collection("tours")
       .replaceOne(
-        { _id: ObjectId(body.id) }, {
+        { _id: new ObjectId(body.id) }, {
         "name": body.document.name,
         "isActive": body.document.isActive,
         "competitions": body.document.competitions
@@ -108,7 +108,7 @@ async function setActiveTour(client, event) {
     const body = JSON.parse(event.body);
     let collection = await client.db("gg-tour").collection("tours");
     await collection.updateMany({}, { $set: { isActive: false } })
-    await collection.updateOne({ _id: ObjectId(body.tourId) }, { $set: { isActive: true } });
+    await collection.updateOne({ _id: new ObjectId(body.tourId) }, { $set: { isActive: true } });
     return { statusCode: 200, body: JSON.stringify({ message: "something" }) };
   }
   catch (e) {
@@ -125,7 +125,7 @@ async function updateCompetition(client, event) {
       .db("gg-tour")
       .collection("tours")
       .updateOne(
-        { _id: ObjectId(body.tourId) },
+        { _id: new ObjectId(body.tourId) },
         {
           $set: {
             "competitions.$[i].location": body.location,
@@ -138,11 +138,12 @@ async function updateCompetition(client, event) {
         {
           arrayFilters: [
             {
-              "i._id": ObjectId(body.competitionId)
+              "i._id": new ObjectId(body.competitionId)
             }
           ]
         });
-    console.log(`matched: ${result.result.n} modified: ${result.result.nModified} ok: ${result.result.ok}`)
+    //console.log(`matched: ${result.result.n} modified: ${result.result.nModified} ok: ${result.result.ok}`)
+    console.log(result);
     return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
   catch (e) {
@@ -158,11 +159,11 @@ async function addNewCompetition(client, event) {
       .db("gg-tour")
       .collection("tours")
       .updateOne(
-        { _id: ObjectId(body.tourId) },
+        { _id: new ObjectId(body.tourId) },
         {
           $push: {
             competitions: {
-              _id: ObjectId(),
+              _id: new ObjectId(),
               location: body.location,
               date: body.date,
               starttime: body.starttime,
@@ -187,8 +188,8 @@ async function deleteCompetition(client, event) {
       .db("gg-tour")
       .collection("tours")
       .updateOne(
-        { _id: ObjectId(body.tourId) },
-        { $pull: { competitions: { _id: ObjectId(body.competitionId) } } }
+        { _id: new ObjectId(body.tourId) },
+        { $pull: { competitions: { _id: new ObjectId(body.competitionId) } } }
       );
     return { statusCode: 200, body: JSON.stringify({ message: result }) };
   }
