@@ -98,10 +98,10 @@
             class:hidden={competition.expanded || tour.expanded}
           >
             <td>Spelare</td>
-            {#if tour.name == "2020" || tour.name == "2021"}
-              <td>Poäng</td>
-            {:else}
+            {#if tour.name == "2022"}
               <td>Nettoslag</td>
+            {:else}
+              <td>Poäng</td>
             {/if}
             <td>Extrapoäng</td>
             <td>Birdies</td>
