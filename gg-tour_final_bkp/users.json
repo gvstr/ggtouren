@@ -1,0 +1,11 @@
+{"_id":{"$oid":"5e139ae5c46fa447005cd409"},"email":"gustav.strid@gmail.com","username":"Gustav","password":"$2a$10$uzy71ZfdMZ5DDrwx97NLKeWknuyuVAS620raPpI2rMXsmIwt3kmDC","isAdmin":true}
+{"_id":{"$oid":"5e24642fb2e1814cccae658e"},"email":"a@a","username":"a","password":"$2a$10$m1vl72dlV2G.JI7/4Egw1OTIv8AP0rtcv6MX2TD/uzhmaHI6A3ml2","isAdmin":false}
+{"_id":{"$oid":"5e25d73d2230bf0007a43cee"},"email":"227190svante@telia.com","username":"Svante","password":"$2a$10$D1FLvLChnlCMt9H6qFEgce5dqqSVbd6qdn05bE6rEUvSonLHZqlWu","isAdmin":true}
+{"_id":{"$oid":"5e7911741e1daf0008f1e81f"},"email":"yngve.fermby@gmail.com","username":"Yngve","password":"$2a$10$Mvat62yGE1bB13MGL9o4l.51BKaQB4xMv8rIwO.li/c.R.RZewz5q","isAdmin":false}
+{"_id":{"$oid":"5e270bb96adf5f00080e8c37"},"email":"bo.axelsson49@gmail.com","username":"ggtouren","password":"$2a$10$dzpge7fG37S/TYS9HGWkGOhsNRZz0bq1WbOwnbaaap4N.TbESH5Zy","isAdmin":false}
+{"_id":{"$oid":"5e29df19b54e8b0008ad36ce"},"email":"hagabymaleri@gmail.com","username":"Ggtouren","password":"$2a$10$Nb5z6WNhtYupwS3F52ZHPOFn7w2wzJ881dt71kZ6KbvTnSOfwRSl.","isAdmin":false}
+{"_id":{"$oid":"5e25d4a2c8ca660008a0e717"},"email":"stefan.bjorktegen@gmail.com","username":"Stefan","password":"$2a$10$ag2ogIK9JYKvk81kdrlkC.apfnn4FRJfr0fX/nsQM0b0GR6izRrem","isAdmin":false}
+{"_id":{"$oid":"5ec13fd2dc07c80008e0de1d"},"email":"gammelknatten@gmail.com","username":"Valle","password":"$2a$10$g10czS2zRgjECq/grz9WJugmnpscZlO6YeLXpwlTPZhDt7iiomhxu","isAdmin":false}
+{"_id":{"$oid":"5ec16de38555fb000733c890"},"email":"jan-erik.johansson@sanda.se","username":"Janne","password":"$2a$10$IbMlcTIIHE9ZaTZIOyvyjOZ1Dkxbhu.1Ug7tKqhvLdHrXrKOzdzaO","isAdmin":false}
+{"_id":{"$oid":"5e25e0e058e9610006eb2327"},"email":"benga.ivarsson@outlook.com","username":"Benga","password":"$2a$10$rXm32sWzXcnfWfLlMrJoQuMMVk2UxSRM2.VNSzWD3Pt/mmmO7Q2G2","isAdmin":false}
+{"_id":{"$oid":"5ec13afee6f71600080a5bc6"},"email":"jorgen.eriksson1@hotmail.com","username":"Jörgen ","password":"$2a$10$i5fTIlsXUd/trzoPOg3KKuV09HiVRRbK8KakQ0Ra86lgMbxV4L.c2","isAdmin":false}
